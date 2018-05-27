@@ -18,9 +18,9 @@ def make_zone(tzjs_zone):
         if time == 0:
             initial = offset
         else:
-            changes.append(( time // 60, offset ))
+            changes.append((time // 60, offset))
 
-    return ( changes, initial )
+    return (changes, initial)
 
 
 def main():
@@ -35,18 +35,20 @@ def main():
         print "error: zoneinfo not found: " + zoneinfo
         sys.exit(1)
 
-    # test with New_York for now
-    tz_json = json.loads(tzjs.compiled_to_json.json_zones(zoneinfo))
+    # convert compiled tzdata to tz.js json format
+    tzjs_json = json.loads(tzjs.compiled_to_json.json_zones(zoneinfo))
 
-    outfile = os.path.join(args.output, "America/New_York" + ".json")
-    outcontent = make_zone(tz_json["America/New_York"])
+    # write files
+    for (zonename, tzjs_zone) in tzjs_json.items():
+        filepath = os.path.join(args.output, zonename + ".json")
+        filecontent = make_zone(tzjs_zone)
 
-    if not os.path.exists(os.path.dirname(outfile)):
-        os.makedirs(os.path.dirname(outfile))
+        if not os.path.exists(os.path.dirname(filepath)):
+           os.makedirs(os.path.dirname(filepath))
 
-    output = io.open(outfile, "w", encoding="utf-8")
-    output.write(unicode(json.dumps(outcontent), encoding="utf-8-sig"))
-    output.close()
+        output = io.open(filepath, "w", encoding="utf-8")
+        output.write(unicode(json.dumps(filecontent), encoding="utf-8-sig"))
+        output.close()
 
 
 if __name__ == "__main__":

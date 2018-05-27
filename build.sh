@@ -1,5 +1,7 @@
 #! /bin/bash
 
+set -e
+
 # ensure tz repository
 
 if [ ! -d tz/.git ]; then
@@ -15,7 +17,7 @@ tzdata="$(pwd -P)/tzdata/$version"
 output="$(pwd -P)/dist/$version"
 
 if [ -d "$output" ]; then
-    echo "dist/$version is current"
+    echo "Existing version at 'dist/$version' is current."
     exit 0
 fi
 
@@ -42,3 +44,4 @@ fi
 # build dist
 
 ./build.py "$zoneinfo" "$output"
+echo "Created new version at 'dist/$version'."

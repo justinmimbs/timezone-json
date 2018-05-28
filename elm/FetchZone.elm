@@ -52,7 +52,7 @@ init =
                             |> Task.map (Tuple.pair zoneName)
 
                     Time.Offset offset ->
-                        Task.succeed ( offset |> offsetToString, Time.customZone offset [] )
+                        Task.succeed ( "UTC" ++ (offset |> offsetToString), Time.customZone offset [] )
             )
         |> Task.onError (\_ -> Task.succeed ( "UTC", Time.utc ))
         |> Task.perform ReceiveTimeZone
@@ -69,8 +69,7 @@ offsetToString offset =
             else
                 "+"
     in
-    "UTC"
-        ++ sign
+    sign
         ++ (abs offset // 60 |> String.fromInt |> String.padLeft 2 '0')
         ++ ":"
         ++ (offset |> modBy 60 |> String.fromInt |> String.padLeft 2 '0')
@@ -88,7 +87,7 @@ update (ReceiveTimeZone timeZone) model =
 
 
 
--- remote time zone
+-- time zone
 
 
 fetchTimeZone : String -> Task Http.Error Time.Zone

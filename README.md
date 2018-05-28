@@ -11,11 +11,11 @@ See the `elm` folder for examples of use with `elm/time`.
 ```
 
 - clones the [IANA time zone database repository][tz]
-- compiles the time zone information files for the latest release
+- compiles time zone information files for the latest release
 - uses a script from [tz.js][tzjs] to read the compiled files
 - writes a set of JSON files to `dist/<version>`
 
-If the latest tzdb release is version `2018e`, then the file for "America/Los_Angeles" will be written to `dist/2018e/America/Los_Angeles.json`.
+For example, if the latest tzdb release is version `2018e`, then the file for "America/Los_Angeles" will be written to `dist/2018e/America/Los_Angeles.json`.
 
 [tz]: https://github.com/eggert/tz
 [tzjs]: https://github.com/dbaron/tz.js

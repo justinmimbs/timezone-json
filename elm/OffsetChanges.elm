@@ -97,7 +97,7 @@ decodeOffsetChange =
 view : Model -> Browser.Page Msg
 view tz =
     Browser.Page
-        "FetchZone"
+        "OffsetChanges"
         [ Html.pre
             []
             [ Html.text (tz.name ++ "\n")
@@ -112,7 +112,7 @@ formatChanges initial changes =
     List.map2
         (\previous { start, offset } ->
             (start * 60000 + previous * 60000 |> Time.millisToPosix |> formatPosix Time.utc)
-                ++ " => "
+                ++ " -> "
                 ++ (offset |> offsetToString)
         )
         (initial :: (changes |> List.map .offset))
@@ -121,18 +121,15 @@ formatChanges initial changes =
 
 offsetToString : Int -> String
 offsetToString offset =
-    let
-        sign =
-            if offset < 0 then
-                "-"
+    (if offset < 0 then
+        "-"
 
-            else
-                "+"
-    in
-    sign
+     else
+        "+"
+    )
         ++ (abs offset // 60 |> String.fromInt |> String.padLeft 2 '0')
         ++ ":"
-        ++ (offset |> modBy 60 |> String.fromInt |> String.padLeft 2 '0')
+        ++ (abs offset |> modBy 60 |> String.fromInt |> String.padLeft 2 '0')
 
 
 formatPosix : Time.Zone -> Posix -> String

@@ -48,8 +48,7 @@ init =
             (\nameOrOffset ->
                 case nameOrOffset of
                     Time.Name zoneName ->
-                        fetchTimeZone zoneName
-                            |> Task.map (Tuple.pair zoneName)
+                        fetchTimeZone zoneName |> Task.map (Tuple.pair zoneName)
 
                     Time.Offset offset ->
                         Task.succeed ( "UTC" ++ (offset |> offsetToString), Time.customZone offset [] )
@@ -61,18 +60,15 @@ init =
 
 offsetToString : Int -> String
 offsetToString offset =
-    let
-        sign =
-            if offset < 0 then
-                "-"
+    (if offset < 0 then
+        "-"
 
-            else
-                "+"
-    in
-    sign
+     else
+        "+"
+    )
         ++ (abs offset // 60 |> String.fromInt |> String.padLeft 2 '0')
         ++ ":"
-        ++ (offset |> modBy 60 |> String.fromInt |> String.padLeft 2 '0')
+        ++ (abs offset |> modBy 60 |> String.fromInt |> String.padLeft 2 '0')
 
 
 
@@ -122,8 +118,8 @@ view model =
         "FetchZone"
         [ Html.pre
             []
-            [ Html.text ("UTC                      | " ++ Tuple.first model.timeZone ++ "\n")
-            , Html.text "------------------------ | ------------------------\n"
+            [ Html.text <| "UTC                      | " ++ Tuple.first model.timeZone ++ "\n"
+            , Html.text <| "------------------------ | ------------------------\n"
             , model.times
                 |> List.map
                     (\time ->

@@ -21,18 +21,12 @@ main =
 
 type alias Model =
     { times : List Posix
-    , timeZone : Remote Time.Zone
+    , timeZone : ( String, Time.Zone )
     }
 
 
 type Msg
-    = ReceiveTimeZone (Result Http.Error Time.Zone)
-
-
-type Remote a
-    = Loading
-    | Success a
-    | Failure Http.Error
+    = ReceiveTimeZone ( String, Time.Zone )
 
 
 init : ( Model, Cmd Msg )
@@ -47,7 +41,7 @@ init =
                 , 1561825998564
                 , 1689782246881
                 ]
-      , timeZone = Loading
+      , timeZone = ( "UTC", Time.utc )
       }
     , Time.getZoneName
         |> Task.andThen
@@ -55,12 +49,31 @@ init =
                 case nameOrOffset of
                     Time.Name zoneName ->
                         fetchTimeZone zoneName
+                            |> Task.map (Tuple.pair zoneName)
 
                     Time.Offset offset ->
-                        Task.succeed (Time.customZone offset [])
+                        Task.succeed ( offset |> offsetToString, Time.customZone offset [] )
             )
-        |> Task.attempt ReceiveTimeZone
+        |> Task.onError (\_ -> Task.succeed ( "UTC", Time.utc ))
+        |> Task.perform ReceiveTimeZone
     )
+
+
+offsetToString : Int -> String
+offsetToString offset =
+    let
+        sign =
+            if offset < 0 then
+                "-"
+
+            else
+                "+"
+    in
+    "UTC"
+        ++ sign
+        ++ (abs offset // 60 |> String.fromInt |> String.padLeft 2 '0')
+        ++ ":"
+        ++ (offset |> modBy 60 |> String.fromInt |> String.padLeft 2 '0')
 
 
 
@@ -68,13 +81,8 @@ init =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update (ReceiveTimeZone result) model =
-    ( case result of
-        Ok timeZone ->
-            { model | timeZone = Success timeZone }
-
-        Err error ->
-            { model | timeZone = Failure error }
+update (ReceiveTimeZone timeZone) model =
+    ( { model | timeZone = timeZone }
     , Cmd.none
     )
 
@@ -113,28 +121,20 @@ view : Model -> Browser.Page Msg
 view model =
     Browser.Page
         "FetchZone"
-        [ case model.timeZone of
-            Loading ->
-                Html.text "Loading"
-
-            Failure error ->
-                Html.text (Debug.toString error)
-
-            Success localZone ->
-                Html.pre
-                    []
-                    [ Html.text "UTC                      | Local\n"
-                    , Html.text "------------------------ | ------------------------\n"
-                    , model.times
-                        |> List.map
-                            (\time ->
-                                (time |> formatPosix Time.utc)
-                                    ++ " | "
-                                    ++ (time |> formatPosix localZone)
-                            )
-                        |> String.join "\n"
-                        |> Html.text
-                    ]
+        [ Html.pre
+            []
+            [ Html.text ("UTC                      | " ++ Tuple.first model.timeZone ++ "\n")
+            , Html.text "------------------------ | ------------------------\n"
+            , model.times
+                |> List.map
+                    (\time ->
+                        (time |> formatPosix Time.utc)
+                            ++ " | "
+                            ++ (time |> formatPosix (Tuple.second model.timeZone))
+                    )
+                |> String.join "\n"
+                |> Html.text
+            ]
         ]
 
 

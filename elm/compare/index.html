@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Compare JS Date offsets to tzdb</title>
+</head>
+<body>
+  <main></main>
+  <script src="main.js"></script>
+  <script src="makeLocalZone.js"></script>
+  <script>
+
+const zone = makeLocalZone(1970, 2037);
+zone.name = 'Date.getTimezoneOffset';
+const app = Elm.Main.embed(document.querySelector('main'), zone);
+
+  </script>
+</body>
+</html>

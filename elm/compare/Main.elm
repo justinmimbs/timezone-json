@@ -3,6 +3,7 @@ module Main exposing (main)
 import Browser
 import Dict exposing (Dict)
 import Html exposing (Html)
+import Html.Attributes
 import Http
 import Json.Decode as Decode exposing (Decoder, Value)
 import Task exposing (Task)
@@ -21,7 +22,7 @@ main =
 
 type alias Model =
     { js : TimeZone
-    , tz : Result String TimeZone
+    , tzResult : Result String TimeZone
     }
 
 
@@ -44,7 +45,7 @@ utc =
 init : TimeZone -> ( Model, Cmd Msg )
 init zone =
     ( { js = zone
-      , tz = Err "Loading"
+      , tzResult = Err "Loading"
       }
     , Time.getZoneName
         |> Task.andThen
@@ -67,7 +68,7 @@ init zone =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update (ReceiveTimeZone result) model =
-    ( { model | tz = result } |> Debug.log "model"
+    ( { model | tzResult = result }
     , Cmd.none
     )
 
@@ -99,69 +100,68 @@ decodeOffsetChange =
 
 
 view : Model -> Html Msg
-view { js, tz } =
-    case tz of
+view { js, tzResult } =
+    case tzResult of
         Err message ->
-            Html.text message
+            Html.pre [] [ Html.text message ]
 
-        Ok zone ->
+        Ok tz ->
             let
                 colWidth =
                     31
+
+                lines : List (Join String)
+                lines =
+                    joinDicts
+                        (indexChanges js.initial (List.reverse js.changes))
+                        (indexChanges tz.initial (List.reverse tz.changes))
+                        |> List.map Tuple.second
+
+                diffCount =
+                    lines |> List.foldl (\line count -> (isMatch line |> bool 0 1) + count) 0
+
+                style : Html a
+                style =
+                    Html.node "style" [] [ Html.text "pre { margin: 0; }" ]
+
+                summary : Html a
+                summary =
+                    Html.pre
+                        [ Html.Attributes.style "color" (diffCount == 0 |> bool "green" "red") ]
+                        [ Html.text (String.fromInt diffCount ++ " difference" ++ (diffCount == 1 |> bool "" "s") ++ "\n\n") ]
+
+                headers : List (Html a)
+                headers =
+                    List.map
+                        (\text -> Html.pre [] [ Html.text text ])
+                        [ (js.name |> String.left colWidth |> String.padRight colWidth ' ')
+                            ++ " | "
+                            ++ tz.name
+                        , String.repeat colWidth "-"
+                            ++ " | "
+                            ++ String.repeat colWidth "-"
+                        ]
             in
-            Html.pre
-                []
-                [ (js.name |> String.left colWidth |> String.padRight colWidth ' ')
-                    ++ " | "
-                    ++ zone.name
-                    ++ "\n"
-                    |> Html.text
-                , String.repeat colWidth "-"
-                    ++ " | "
-                    ++ String.repeat colWidth "-"
-                    ++ "\n"
-                    |> Html.text
-                , compareTimeZones js zone
-                    |> List.map (formatDiff colWidth)
-                    |> String.join "\n"
-                    |> Html.text
-                ]
+            Html.div [] (style :: summary :: headers ++ (lines |> List.map (viewLine colWidth)))
 
 
-type Diff
-    = A String
-    | B String
-    | AB String String
+viewLine : Int -> Join String -> Html a
+viewLine colWidth line =
+    let
+        ( isDiff, text ) =
+            case line of
+                Left l ->
+                    ( True, l ++ " | " )
 
+                Right r ->
+                    ( True, String.repeat colWidth " " ++ " | " ++ r )
 
-formatDiff : Int -> Diff -> String
-formatDiff colWidth diff =
-    case diff of
-        A a ->
-            a ++ " | "
-
-        B b ->
-            String.repeat colWidth " " ++ " | " ++ b
-
-        AB a b ->
-            a ++ " | " ++ b
-
-
-compareTimeZones : TimeZone -> TimeZone -> List Diff
-compareTimeZones a b =
-    Dict.merge
-        (\_ desc diffs -> A desc :: diffs)
-        (\_ descA descB diffs ->
-            if descA == descB then
-                diffs
-
-            else
-                AB descA descB :: diffs
-        )
-        (\_ desc diffs -> B desc :: diffs)
-        (indexChanges a.initial (List.reverse a.changes))
-        (indexChanges b.initial (List.reverse b.changes))
-        []
+                Both l r ->
+                    ( l /= r, l ++ " | " ++ r )
+    in
+    Html.pre
+        [ Html.Attributes.style "color" (isDiff |> bool "red" "gray") ]
+        [ Html.text text ]
 
 
 indexChanges : Int -> List { start : Int, offset : Int } -> Dict ( Int, Int ) String
@@ -207,12 +207,7 @@ indexChanges initial changes =
 
 offsetToString : Int -> String
 offsetToString offset =
-    (if offset < 0 then
-        "-"
-
-     else
-        "+"
-    )
+    (offset < 0 |> bool "-" "+")
         ++ (abs offset // 60 |> String.fromInt |> String.padLeft 2 '0')
         ++ ":"
         ++ (abs offset |> modBy 60 |> String.fromInt |> String.padLeft 2 '0')
@@ -230,3 +225,42 @@ formatPosix zone posix =
             , Time.toMinute zone posix |> String.fromInt |> String.padLeft 2 '0'
             ]
         ]
+
+
+type Join a
+    = Left a
+    | Right a
+    | Both a a
+
+
+isMatch : Join a -> Bool
+isMatch x =
+    case x of
+        Left _ ->
+            False
+
+        Right _ ->
+            False
+
+        Both l r ->
+            l == r
+
+
+joinDicts : Dict comparable a -> Dict comparable a -> List ( comparable, Join a )
+joinDicts left right =
+    Dict.merge
+        (\key l list -> ( key, Left l ) :: list)
+        (\key l r list -> ( key, Both l r ) :: list)
+        (\key r list -> ( key, Right r ) :: list)
+        left
+        right
+        []
+
+
+bool : a -> a -> Bool -> a
+bool t f x =
+    if x then
+        t
+
+    else
+        f

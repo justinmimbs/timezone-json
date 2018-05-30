@@ -127,7 +127,7 @@ view { js, tzResult } =
                 summary : Html a
                 summary =
                     Html.pre
-                        [ Html.Attributes.style "color" (diffCount == 0 |> bool "green" "red") ]
+                        [ Html.Attributes.style "color" (diffCount == 0 |> bool "limegreen" "red") ]
                         [ Html.text (String.fromInt diffCount ++ " difference" ++ (diffCount == 1 |> bool "" "s") ++ "\n\n") ]
 
                 headers : List (Html a)

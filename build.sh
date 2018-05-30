@@ -45,3 +45,9 @@ fi
 
 ./build.py "$zoneinfo" "$output"
 echo "Created new build at 'dist/$version'."
+
+# make tests
+
+./maketests.py 1000 > elm/Tests/Local.elm
+echo "To run tests, start 'elm reactor' and open:"
+echo "http://localhost:8000/elm/Tests.elm"

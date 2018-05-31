@@ -37,11 +37,6 @@ type Msg
     = ReceiveTimeZone (Result String TimeZone)
 
 
-utc : TimeZone
-utc =
-    TimeZone "UTC" [] 0
-
-
 init : TimeZone -> ( Model, Cmd Msg )
 init zone =
     ( { js = zone
@@ -108,7 +103,7 @@ view { js, tzResult } =
         Ok tz ->
             let
                 colWidth =
-                    31
+                    33
 
                 lines : List (Join String)
                 lines =
@@ -120,11 +115,20 @@ view { js, tzResult } =
                 diffCount =
                     lines |> List.foldl (\line count -> (isMatch line |> bool 0 1) + count) 0
 
-                style : Html a
                 style =
                     Html.node "style" [] [ Html.text "pre { margin: 0; }" ]
 
-                summary : Html a
+                desc =
+                    Html.pre []
+                        [ [ "Compare the offset changes used by your browser to those loaded for your"
+                          , "local zone."
+                          , ""
+                          , ""
+                          ]
+                            |> String.join "\n"
+                            |> Html.text
+                        ]
+
                 summary =
                     Html.pre
                         [ Html.Attributes.style "color" (diffCount == 0 |> bool "limegreen" "red") ]
@@ -142,7 +146,14 @@ view { js, tzResult } =
                             ++ String.repeat colWidth "-"
                         ]
             in
-            Html.div [] (style :: summary :: headers ++ (lines |> List.map (viewLine colWidth)))
+            Html.div
+                []
+                (style
+                    :: desc
+                    :: summary
+                    :: headers
+                    ++ (lines |> List.map (viewLine colWidth))
+                )
 
 
 viewLine : Int -> Join String -> Html a
@@ -177,7 +188,7 @@ indexChanges initial changes =
 
                 desc =
                     (adjustedStart |> formatPosix Time.utc)
-                        ++ " -> "
+                        ++ "  ->  "
                         ++ (offset |> offsetToString)
             in
             ( year, desc )

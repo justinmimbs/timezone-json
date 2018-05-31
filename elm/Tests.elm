@@ -99,7 +99,7 @@ view : Model -> Html Msg
 view result =
     case result of
         Err message ->
-            Html.pre [] [ Html.text message ]
+            colorText "red" message
 
         Ok { name, zone } ->
             let
@@ -108,16 +108,29 @@ view result =
                         |> List.map Debug.toString
 
                 summary =
-                    "tested: "
+                    "Tested: "
                         ++ String.fromInt (List.length Local.examples)
-                        ++ "\nfailed: "
+                        ++ "\nFailed: "
                         ++ String.fromInt (List.length failing)
             in
             Html.div
                 []
-                [ Html.pre [] [ Html.text summary ]
-                , Html.pre [] [ Html.text (failing |> String.join "\n") ]
+                [ colorText "black"
+                    ([ "Test that converting a POSIX time to local time in Elm (using 'elm/time' and"
+                     , "the loaded local zone) matches the result produced by your system. (If your"
+                     , "system uses time zone information that differs from the current tzdb, then the"
+                     , "output may not match.)"
+                     ]
+                        |> String.join "\n"
+                    )
+                , colorText "black" summary
+                , colorText "red" (failing |> String.join "\n")
                 ]
+
+
+colorText : String -> String -> Html a
+colorText color text =
+    Html.pre [ Html.Attributes.style "color" color ] [ Html.text text ]
 
 
 testExamples : Time.Zone -> List ( Int, String ) -> List ( Int, String, String )

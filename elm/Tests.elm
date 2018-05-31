@@ -117,9 +117,9 @@ view result =
                 []
                 [ colorText "black"
                     ([ "Test that converting a POSIX time to local time in Elm (using 'elm/time' and"
-                     , "the loaded local zone) matches the result produced by your system. (If your"
-                     , "system uses time zone information that differs from the current tzdb, then the"
-                     , "output may not match.)"
+                     , "the loaded local zone) matches the result produced by your system (not your"
+                     , "browser). If your system uses time zone information that differs from the"
+                     , "current tzdb, then its output may not match."
                      ]
                         |> String.join "\n"
                     )

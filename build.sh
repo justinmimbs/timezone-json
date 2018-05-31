@@ -26,6 +26,7 @@ fi
 # make tzdata
 
 git -C tz -c advice.detachedHead=false checkout $version
+echo "Compiling tz data..."
 make -C tz install_data TOPDIR="$tzdata" REDO=posix_only > /dev/null
 
 zoneinfo="$tzdata/usr/share/zoneinfo"
@@ -45,6 +46,7 @@ fi
 
 # build dist
 
+echo "Converting tz data to JSON files..."
 ./build.py "$zoneinfo" "$output"
 echo ""
 echo "Created new build at 'dist/$version'."

@@ -1,7 +1,8 @@
-module FetchZone exposing (main)
+module Examples exposing (main)
 
 import Browser
 import Html exposing (Html)
+import Html.Attributes
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import Task exposing (Task)
@@ -20,55 +21,30 @@ main =
 
 
 type alias Model =
-    { times : List Posix
-    , timeZone : ( String, Time.Zone )
-    }
+    Result String ( String, Time.Zone )
 
 
 type Msg
-    = ReceiveTimeZone ( String, Time.Zone )
+    = ReceiveTimeZone (Result String ( String, Time.Zone ))
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { times =
-            List.map Time.millisToPosix
-                [ 867564229068
-                , 1131357044194
-                , 1467083800795
-                , 1501214531979
-                , 1512980764516
-                , 1561825998564
-                , 1689782246881
-                ]
-      , timeZone = ( "UTC", Time.utc )
-      }
+    ( Err "Loading"
     , Time.getZoneName
         |> Task.andThen
             (\nameOrOffset ->
                 case nameOrOffset of
                     Time.Name zoneName ->
-                        fetchTimeZone zoneName |> Task.map (Tuple.pair zoneName)
+                        fetchTimeZone zoneName
+                            |> Task.map (Tuple.pair zoneName)
+                            |> Task.mapError Debug.toString
 
                     Time.Offset offset ->
-                        Task.succeed ( "UTC" ++ (offset |> offsetToString), Time.customZone offset [] )
+                        Task.fail "Couldn't get your local time zone name"
             )
-        |> Task.onError (\_ -> Task.succeed ( "UTC", Time.utc ))
-        |> Task.perform ReceiveTimeZone
+        |> Task.attempt ReceiveTimeZone
     )
-
-
-offsetToString : Int -> String
-offsetToString offset =
-    (if offset < 0 then
-        "-"
-
-     else
-        "+"
-    )
-        ++ (abs offset // 60 |> String.fromInt |> String.padLeft 2 '0')
-        ++ ":"
-        ++ (abs offset |> modBy 60 |> String.fromInt |> String.padLeft 2 '0')
 
 
 
@@ -76,8 +52,8 @@ offsetToString offset =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update (ReceiveTimeZone timeZone) model =
-    ( { model | timeZone = timeZone }
+update (ReceiveTimeZone result) _ =
+    ( result
     , Cmd.none
     )
 
@@ -113,24 +89,40 @@ decodeOffsetChange =
 
 
 view : Model -> Browser.Page Msg
-view model =
+view result =
     Browser.Page
-        "FetchZone"
-        [ Html.pre
-            []
-            [ Html.text <| "UTC                      | " ++ Tuple.first model.timeZone ++ "\n"
-            , Html.text <| "------------------------ | ------------------------\n"
-            , model.times
-                |> List.map
-                    (\time ->
-                        (time |> formatPosix Time.utc)
-                            ++ " | "
-                            ++ (time |> formatPosix (Tuple.second model.timeZone))
-                    )
-                |> String.join "\n"
-                |> Html.text
-            ]
-        ]
+        "Examples"
+        (case result of
+            Err message ->
+                [ Html.pre [ Html.Attributes.style "color" "red" ] [ Html.text message ] ]
+
+            Ok ( zoneName, zone ) ->
+                [ Html.pre
+                    []
+                    [ [ "Examples of Posix times displayed in UTC and your local time:"
+                      , ""
+                      , "UTC                      | " ++ zoneName
+                      , "------------------------ | ------------------------"
+                      ]
+                        ++ ([ 867564229068
+                            , 1131357044194
+                            , 1467083800795
+                            , 1501214531979
+                            , 1512980764516
+                            , 1561825998564
+                            , 1689782246881
+                            ]
+                                |> List.map Time.millisToPosix
+                                |> List.map
+                                    (\posix ->
+                                        (posix |> formatPosix Time.utc) ++ " | " ++ (posix |> formatPosix zone)
+                                    )
+                           )
+                        |> String.join "\n"
+                        |> Html.text
+                    ]
+                ]
+        )
 
 
 formatPosix : Time.Zone -> Posix -> String

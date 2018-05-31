@@ -1,7 +1,8 @@
-module OffsetChanges exposing (main)
+module ZoneInfo exposing (main)
 
 import Browser
 import Html exposing (Html)
+import Html.Attributes
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import Task exposing (Task)
@@ -20,7 +21,7 @@ main =
 
 
 type alias Model =
-    TimeZone
+    Result String TimeZone
 
 
 type alias TimeZone =
@@ -31,29 +32,24 @@ type alias TimeZone =
 
 
 type Msg
-    = ReceiveTimeZone TimeZone
-
-
-utc : TimeZone
-utc =
-    TimeZone "UTC" [] 0
+    = ReceiveTimeZone (Result String TimeZone)
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( utc
+    ( Err "Loading"
     , Time.getZoneName
         |> Task.andThen
             (\nameOrOffset ->
                 case nameOrOffset of
                     Time.Name zoneName ->
                         fetchTimeZone zoneName
+                            |> Task.mapError Debug.toString
 
                     Time.Offset offset ->
-                        Task.succeed utc
+                        Task.fail "Couldn't get your local time zone name"
             )
-        |> Task.onError (\_ -> Task.succeed utc)
-        |> Task.perform ReceiveTimeZone
+        |> Task.attempt ReceiveTimeZone
     )
 
 
@@ -62,8 +58,8 @@ init =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update (ReceiveTimeZone timeZone) _ =
-    ( timeZone
+update (ReceiveTimeZone result) _ =
+    ( result
     , Cmd.none
     )
 
@@ -95,16 +91,38 @@ decodeOffsetChange =
 
 
 view : Model -> Browser.Page Msg
-view tz =
+view result =
     Browser.Page
-        "OffsetChanges"
-        [ Html.pre
-            []
-            [ Html.text (tz.name ++ "\n")
-            , Html.text ((tz.initial |> offsetToString) ++ "\n")
-            , Html.text (formatChanges tz.initial (List.reverse tz.changes) |> String.join "\n")
-            ]
-        ]
+        "ZoneInfo"
+        (case result of
+            Err message ->
+                [ colorText "red" message ]
+
+            Ok tz ->
+                [ colorText "black"
+                    ([ "This is the information loaded for your local zone. Offset changes are"
+                     , "displayed as [local time]  ->  [UTC offset]."
+                     ]
+                        |> String.join "\n"
+                    )
+                , colorText "gray" "Time zone name:"
+                , colorText "black" (indent tz.name)
+                , colorText "gray" "Initial offset:"
+                , colorText "black" (indent (tz.initial |> offsetToString))
+                , colorText "gray" "Offset changes:"
+                , colorText "black" (formatChanges tz.initial (List.reverse tz.changes) |> List.map indent |> String.join "\n")
+                ]
+        )
+
+
+indent : String -> String
+indent s =
+    "    " ++ s
+
+
+colorText : String -> String -> Html a
+colorText color text =
+    Html.pre [ Html.Attributes.style "color" color ] [ Html.text text ]
 
 
 formatChanges : Int -> List { start : Int, offset : Int } -> List String
@@ -112,7 +130,7 @@ formatChanges initial changes =
     List.map2
         (\previous { start, offset } ->
             (start * 60000 + previous * 60000 |> Time.millisToPosix |> formatPosix Time.utc)
-                ++ " -> "
+                ++ "  ->  "
                 ++ (offset |> offsetToString)
         )
         (initial :: (changes |> List.map .offset))
@@ -142,6 +160,5 @@ formatPosix zone posix =
         , String.join ":"
             [ Time.toHour zone posix |> String.fromInt |> String.padLeft 2 '0'
             , Time.toMinute zone posix |> String.fromInt |> String.padLeft 2 '0'
-            , Time.toSecond zone posix |> String.fromInt |> String.padLeft 2 '0'
             ]
         ]

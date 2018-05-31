@@ -62,5 +62,6 @@ echo "To run tests, see examples, and compare to browser, start 'elm reactor' an
 
     http://localhost:8000/elm/Tests.elm
     http://localhost:8000/elm/Examples.elm
+    http://localhost:8000/elm/ZoneInfo.elm
     http://localhost:8000/elm/compare/index.html
 "

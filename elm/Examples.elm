@@ -11,11 +11,10 @@ import Time exposing (Posix)
 
 main : Program () Model Msg
 main =
-    Browser.fullscreen
+    Browser.document
         { init = always init
         , view = view
         , update = update
-        , onNavigation = Nothing
         , subscriptions = always Sub.none
         }
 
@@ -88,9 +87,9 @@ decodeOffsetChange =
 -- view
 
 
-view : Model -> Browser.Page Msg
+view : Model -> Browser.Document Msg
 view result =
-    Browser.Page
+    Browser.Document
         "Examples"
         (case result of
             Err message ->

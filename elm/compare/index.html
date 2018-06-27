@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Compare</title>
-</head>
-<body>
-  <main></main>
-  <script src="main.js"></script>
-  <script src="makeLocalZone.js"></script>
-  <script>
+  <head>
+    <title>Compare</title>
+  </head>
+  <body>
+    <main></main>
+    <script src="main.js"></script>
+    <script src="makeLocalZone.js"></script>
+    <script>
 
 const zone = makeLocalZone(1970, 2037);
 zone.name = 'JavaScript Date';
-const app = Elm.Main.embed(document.querySelector('main'), zone);
+const app = Elm.Main.init({
+  node: document.querySelector("main"),
+  flags: zone
+});
 
-  </script>
-</body>
+    </script>
+  </body>
 </html>

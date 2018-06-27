@@ -12,7 +12,7 @@ import Time exposing (Posix)
 
 main : Program TimeZone Model Msg
 main =
-    Browser.embed
+    Browser.document
         { init = init
         , view = view
         , update = update
@@ -94,66 +94,66 @@ decodeOffsetChange =
 -- view
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view { js, tzResult } =
-    case tzResult of
-        Err message ->
-            Html.pre [] [ Html.text message ]
+    Browser.Document
+        "Compare"
+        (case tzResult of
+            Err message ->
+                [ Html.pre [] [ Html.text message ] ]
 
-        Ok tz ->
-            let
-                colWidth =
-                    33
+            Ok tz ->
+                let
+                    colWidth =
+                        33
 
-                lines : List (Join String)
-                lines =
-                    joinDicts
-                        (indexChanges js.initial (List.reverse js.changes))
-                        (indexChanges tz.initial (List.reverse tz.changes))
-                        |> List.map Tuple.second
+                    lines : List (Join String)
+                    lines =
+                        joinDicts
+                            (indexChanges js.initial (List.reverse js.changes))
+                            (indexChanges tz.initial (List.reverse tz.changes))
+                            |> List.map Tuple.second
 
-                diffCount =
-                    lines |> List.foldl (\line count -> (isMatch line |> bool 0 1) + count) 0
+                    diffCount =
+                        lines |> List.foldl (\line count -> (isMatch line |> bool 0 1) + count) 0
 
-                style =
-                    Html.node "style" [] [ Html.text "pre { margin: 0; }" ]
+                    style =
+                        Html.node "style" [] [ Html.text "pre { margin: 0; }" ]
 
-                desc =
-                    Html.pre []
-                        [ [ "Compare the offset changes used by your browser to those loaded for your"
-                          , "local zone."
-                          , ""
-                          , ""
-                          ]
-                            |> String.join "\n"
-                            |> Html.text
-                        ]
+                    desc =
+                        Html.pre []
+                            [ [ "Compare the offset changes used by your browser to those loaded for your"
+                              , "local zone."
+                              , ""
+                              , ""
+                              ]
+                                |> String.join "\n"
+                                |> Html.text
+                            ]
 
-                summary =
-                    Html.pre
-                        [ Html.Attributes.style "color" (diffCount == 0 |> bool "limegreen" "red") ]
-                        [ Html.text (String.fromInt diffCount ++ " difference" ++ (diffCount == 1 |> bool "" "s") ++ "\n\n") ]
+                    summary =
+                        Html.pre
+                            [ Html.Attributes.style "color" (diffCount == 0 |> bool "limegreen" "red") ]
+                            [ Html.text (String.fromInt diffCount ++ " difference" ++ (diffCount == 1 |> bool "" "s") ++ "\n\n") ]
 
-                headers : List (Html a)
-                headers =
-                    List.map
-                        (\text -> Html.pre [] [ Html.text text ])
-                        [ (js.name |> String.left colWidth |> String.padRight colWidth ' ')
-                            ++ " | "
-                            ++ tz.name
-                        , String.repeat colWidth "-"
-                            ++ " | "
-                            ++ String.repeat colWidth "-"
-                        ]
-            in
-            Html.div
-                []
-                (style
+                    headers : List (Html a)
+                    headers =
+                        List.map
+                            (\text -> Html.pre [] [ Html.text text ])
+                            [ (js.name |> String.left colWidth |> String.padRight colWidth ' ')
+                                ++ " | "
+                                ++ tz.name
+                            , String.repeat colWidth "-"
+                                ++ " | "
+                                ++ String.repeat colWidth "-"
+                            ]
+                in
+                style
                     :: desc
                     :: summary
                     :: headers
                     ++ (lines |> List.map (viewLine colWidth))
-                )
+        )
 
 
 viewLine : Int -> Join String -> Html a

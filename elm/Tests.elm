@@ -13,8 +13,8 @@ import Time exposing (Posix)
 
 main : Program () Model Msg
 main =
-    Browser.embed
-        { init = init
+    Browser.document
+        { init = always init
         , view = view
         , update = update
         , subscriptions = always Sub.none
@@ -35,8 +35,8 @@ type Msg
     = ReceiveTimeZone (Result String TimeZone)
 
 
-init : a -> ( Model, Cmd Msg )
-init _ =
+init : ( Model, Cmd Msg )
+init =
     ( Err "Loading"
     , Time.getZoneName
         |> Task.andThen
@@ -95,37 +95,38 @@ decodeOffsetChange =
 -- view
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view result =
-    case result of
-        Err message ->
-            colorText "red" message
+    Browser.Document
+        "Tests"
+        (case result of
+            Err message ->
+                [ colorText "red" message ]
 
-        Ok { name, zone } ->
-            let
-                failing =
-                    testExamples zone Local.examples
-                        |> List.map Debug.toString
+            Ok { name, zone } ->
+                let
+                    failing =
+                        testExamples zone Local.examples
+                            |> List.map Debug.toString
 
-                summary =
-                    "Tested: "
-                        ++ String.fromInt (List.length Local.examples)
-                        ++ "\nFailed: "
-                        ++ String.fromInt (List.length failing)
-            in
-            Html.div
-                []
+                    summary =
+                        "Tested: "
+                            ++ String.fromInt (List.length Local.examples)
+                            ++ "\nFailed: "
+                            ++ String.fromInt (List.length failing)
+                in
                 [ colorText "black"
                     ([ "Test that converting a POSIX time to local time in Elm (using 'elm/time' and"
-                     , "the loaded local zone) matches the result produced by your system (not your"
-                     , "browser). If your system uses time zone information that differs from the"
-                     , "current tzdb, then its output may not match."
+                     , "the loaded local zone, '" ++ name ++ "') matches the result produced by"
+                     , "your system (not your browser). If your system uses time zone information that"
+                     , "differs from the current tzdb, then the output may not match."
                      ]
                         |> String.join "\n"
                     )
                 , colorText "black" summary
                 , colorText "red" (failing |> String.join "\n")
                 ]
+        )
 
 
 colorText : String -> String -> Html a

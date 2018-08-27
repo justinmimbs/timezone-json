@@ -12,15 +12,21 @@ import tzjs.compiled_to_json
 def make_zone(tzjs_zone):
     changes = []
     initial = 0
+    currentoffset = None
 
-    for (time, idx) in reversed(zip(tzjs_zone["times"], tzjs_zone["ltidx"])):
+    for ( time, idx ) in zip(tzjs_zone["times"], tzjs_zone["ltidx"]):
         offset = tzjs_zone["types"][idx]["o"] // 60
-        if time == 0:
-            initial = offset
-        else:
-            changes.append((time // 60, offset))
 
-    return (changes, initial)
+        if time <= 0:
+            initial = offset
+
+        elif offset != currentoffset:
+            changes.append(( time // 60, offset ))
+
+        currentoffset = offset
+
+    changes.reverse()
+    return ( changes, initial )
 
 
 def main():

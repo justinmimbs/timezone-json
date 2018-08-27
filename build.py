@@ -14,7 +14,7 @@ def make_zone(tzjs_zone):
     initial = 0
     currentoffset = None
 
-    for ( time, idx ) in zip(tzjs_zone["times"], tzjs_zone["ltidx"]):
+    for time, idx in zip(tzjs_zone["times"], tzjs_zone["ltidx"]):
         offset = tzjs_zone["types"][idx]["o"] // 60
 
         if time <= 0:
@@ -27,6 +27,15 @@ def make_zone(tzjs_zone):
 
     changes.reverse()
     return ( changes, initial )
+
+
+def create_jsonfile(filepath, filecontent):
+        if not os.path.exists(os.path.dirname(filepath)):
+           os.makedirs(os.path.dirname(filepath))
+
+        output = io.open(filepath, "w", encoding="utf-8")
+        output.write(unicode(json.dumps(filecontent), encoding="utf-8-sig"))
+        output.close()
 
 
 def main():
@@ -44,17 +53,14 @@ def main():
     # convert compiled tzdata to tz.js json format
     tzjs_json = json.loads(tzjs.compiled_to_json.json_zones(zoneinfo))
 
-    # write files
-    for (zonename, tzjs_zone) in tzjs_json.items():
+    # write zone files
+    for zonename, tzjs_zone in tzjs_json.iteritems():
         filepath = os.path.join(args.output, zonename + ".json")
         filecontent = make_zone(tzjs_zone)
+        create_jsonfile(filepath, filecontent)
 
-        if not os.path.exists(os.path.dirname(filepath)):
-           os.makedirs(os.path.dirname(filepath))
-
-        output = io.open(filepath, "w", encoding="utf-8")
-        output.write(unicode(json.dumps(filecontent), encoding="utf-8-sig"))
-        output.close()
+    # write zones.json
+    create_jsonfile(os.path.join(args.output, "zones.json"), sorted(tzjs_json.keys()))
 
 
 if __name__ == "__main__":

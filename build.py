@@ -15,13 +15,13 @@ def make_zone(tzjs_zone):
     currentoffset = None
 
     for time, idx in zip(tzjs_zone["times"], tzjs_zone["ltidx"]):
-        offset = tzjs_zone["types"][idx]["o"] // 60
+        offset = int(round(tzjs_zone["types"][idx]["o"] / 60.0))
 
         if time <= 0:
             initial = offset
 
         elif offset != currentoffset:
-            changes.append(( time // 60, offset ))
+            changes.append(( int(round(time / 60.0)), offset ))
 
         currentoffset = offset
 

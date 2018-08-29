@@ -1,12 +1,18 @@
 #! /usr/bin/python
 
 import argparse
+import calendar
 import io
 import json
 import os
 import sys
 
 import tzjs.compiled_to_json
+
+
+START_TIME = 0
+
+UNTIL_TIME = calendar.timegm((2038, 1, 1, 0, 0, 0))
 
 
 def make_zone(tzjs_zone):
@@ -17,10 +23,10 @@ def make_zone(tzjs_zone):
     for time, idx in zip(tzjs_zone["times"], tzjs_zone["ltidx"]):
         offset = int(round(tzjs_zone["types"][idx]["o"] / 60.0))
 
-        if time <= 0:
+        if time <= START_TIME:
             initial = offset
 
-        elif offset != currentoffset:
+        elif time < UNTIL_TIME and offset != currentoffset:
             changes.append(( int(round(time / 60.0)), offset ))
 
         currentoffset = offset

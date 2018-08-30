@@ -1,6 +1,7 @@
 module ZoneInfo exposing (main)
 
 import Browser
+import Format exposing (formatPosix)
 import Html exposing (Html)
 import Html.Attributes
 import Http
@@ -147,17 +148,3 @@ offsetToString offset =
         ++ (abs offset // 60 |> String.fromInt |> String.padLeft 2 '0')
         ++ ":"
         ++ (abs offset |> modBy 60 |> String.fromInt |> String.padLeft 2 '0')
-
-
-formatPosix : Time.Zone -> Posix -> String
-formatPosix zone posix =
-    String.join " "
-        [ Time.toWeekday zone posix |> Debug.toString
-        , Time.toMonth zone posix |> Debug.toString
-        , Time.toDay zone posix |> String.fromInt |> String.padLeft 2 '0'
-        , Time.toYear zone posix |> String.fromInt
-        , String.join ":"
-            [ Time.toHour zone posix |> String.fromInt |> String.padLeft 2 '0'
-            , Time.toMinute zone posix |> String.fromInt |> String.padLeft 2 '0'
-            ]
-        ]

@@ -5,7 +5,7 @@ import random
 import time
 
 
-template = """module Tests.Local exposing (examples)
+template = """module Local exposing (examples)
 
 
 examples : List ( Int, String )

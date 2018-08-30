@@ -54,16 +54,16 @@ echo ""
 
 # make tests, compare/main.js
 
-./maketests.py 1000 > elm/Tests/Local.elm
+./maketests.py 1000 > tests/Local.elm
 
 if [ -x "$(command -v elm)" ]; then
-    elm make elm/compare/Main.elm --output elm/compare/main.js > /dev/null
+    elm make tests/compare/Main.elm --output tests/compare/main.js > /dev/null
 fi
 
-echo "To run tests, see examples, and compare to browser, start 'elm reactor' and open:
+echo "To run tests, compare to browser, and see examples, start 'elm reactor' and open:
 
-    http://localhost:8000/elm/Tests.elm
-    http://localhost:8000/elm/Examples.elm
-    http://localhost:8000/elm/ZoneInfo.elm
-    http://localhost:8000/elm/compare/index.html
+    http://localhost:8000/tests/Tests.elm
+    http://localhost:8000/tests/compare/index.html
+    http://localhost:8000/examples/GetZone.elm
+    http://localhost:8000/examples/ZoneInfo.elm
 "

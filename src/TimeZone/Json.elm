@@ -1,4 +1,4 @@
-module TimeZone.Json exposing (Error(..), fetchZone, getZone)
+module TimeZone.Json exposing (Error(..), getZone, getZoneByName)
 
 import Http
 import Json.Decode as Decode exposing (Decoder)
@@ -18,7 +18,7 @@ getZone pathToJson =
             (\nameOrOffset ->
                 case nameOrOffset of
                     Time.Name zoneName ->
-                        fetchZone pathToJson zoneName
+                        getZoneByName pathToJson zoneName
                             |> Task.map (Tuple.pair zoneName)
                             |> Task.mapError (HttpError zoneName)
 
@@ -27,8 +27,8 @@ getZone pathToJson =
             )
 
 
-fetchZone : String -> String -> Task Http.Error Time.Zone
-fetchZone pathToJson zoneName =
+getZoneByName : String -> String -> Task Http.Error Time.Zone
+getZoneByName pathToJson zoneName =
     Http.get
         (pathToJson ++ "/" ++ zoneName ++ ".json")
         decodeZone

@@ -41,7 +41,7 @@ tzjs=tzjs/compiled_to_json.py
 if [ ! -f $tzjs ]; then
     mkdir tzjs
     touch tzjs/__init__.py
-    curl "https://raw.githubusercontent.com/dbaron/tz.js/ea3d1b43fc5cc9b50e220c6a8d525d5eeb25f08f/compiled-to-json.py" -o $tzjs
+    curl "https://raw.githubusercontent.com/dbaron/tz.js/06edde418046e02f8ba1828859890e30393469b0/compiled-to-json.py" -o $tzjs
 fi
 
 # build dist

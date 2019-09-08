@@ -36,12 +36,12 @@ def make_zone(tzjs_zone):
 
 
 def create_jsonfile(filepath, filecontent):
-        if not os.path.exists(os.path.dirname(filepath)):
-           os.makedirs(os.path.dirname(filepath))
+    if not os.path.exists(os.path.dirname(filepath)):
+       os.makedirs(os.path.dirname(filepath))
 
-        output = io.open(filepath, "w", encoding="utf-8")
-        output.write(unicode(json.dumps(filecontent), encoding="utf-8-sig"))
-        output.close()
+    output = io.open(filepath, "w", encoding="utf-8")
+    output.write(unicode(json.dumps(filecontent), encoding="utf-8-sig"))
+    output.close()
 
 
 def main():

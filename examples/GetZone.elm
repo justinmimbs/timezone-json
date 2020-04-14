@@ -1,4 +1,4 @@
-module Examples exposing (main)
+module GetZone exposing (main)
 
 import Browser
 import Format exposing (formatPosix)

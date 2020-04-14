@@ -11,7 +11,7 @@
 
 const zone = makeLocalZone(1970, 2037);
 zone.name = 'JavaScript Date';
-const app = Elm.Main.init({
+const app = Elm.Compare.init({
   node: document.querySelector("main"),
   flags: zone
 });

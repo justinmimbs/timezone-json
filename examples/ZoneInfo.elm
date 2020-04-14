@@ -8,6 +8,7 @@ import Http
 import Json.Decode as Decode exposing (Decoder)
 import Task exposing (Task)
 import Time exposing (Posix)
+import TimeZone.Json exposing (ZoneInfo)
 
 
 main : Program () Model Msg
@@ -21,18 +22,11 @@ main =
 
 
 type alias Model =
-    Result String TimeZone
-
-
-type alias TimeZone =
-    { name : String
-    , changes : List { start : Int, offset : Int }
-    , initial : Int
-    }
+    Result String ZoneInfo
 
 
 type Msg
-    = ReceiveTimeZone (Result String TimeZone)
+    = ReceiveZoneInfo (Result String ZoneInfo)
 
 
 init : ( Model, Cmd Msg )
@@ -43,13 +37,13 @@ init =
             (\nameOrOffset ->
                 case nameOrOffset of
                     Time.Name zoneName ->
-                        fetchTimeZone zoneName
+                        TimeZone.Json.getZoneInfoByName "/dist/2019c/" zoneName
                             |> Task.mapError Debug.toString
 
                     Time.Offset offset ->
                         Task.fail "Couldn't get your local time zone name"
             )
-        |> Task.attempt ReceiveTimeZone
+        |> Task.attempt ReceiveZoneInfo
     )
 
 
@@ -58,32 +52,10 @@ init =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update (ReceiveTimeZone result) _ =
+update (ReceiveZoneInfo result) _ =
     ( result
     , Cmd.none
     )
-
-
-
--- time zone
-
-
-fetchTimeZone : String -> Task Http.Error TimeZone
-fetchTimeZone zoneName =
-    Http.get
-        ("/dist/2018e/" ++ zoneName ++ ".json")
-        (Decode.map2 (TimeZone zoneName)
-            (Decode.index 0 (Decode.list decodeOffsetChange))
-            (Decode.index 1 Decode.int)
-        )
-        |> Http.toTask
-
-
-decodeOffsetChange : Decoder { start : Int, offset : Int }
-decodeOffsetChange =
-    Decode.map2 (\a b -> { start = a, offset = b })
-        (Decode.index 0 Decode.int)
-        (Decode.index 1 Decode.int)
 
 
 

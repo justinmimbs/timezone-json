@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Compare exposing (main)
 
 import Browser
 import Dict exposing (Dict)
@@ -9,9 +9,10 @@ import Http
 import Json.Decode as Decode exposing (Decoder, Value)
 import Task exposing (Task)
 import Time exposing (Posix)
+import TimeZone.Json exposing (ZoneInfo)
 
 
-main : Program TimeZone Model Msg
+main : Program ZoneInfo Model Msg
 main =
     Browser.document
         { init = init
@@ -22,23 +23,16 @@ main =
 
 
 type alias Model =
-    { js : TimeZone
-    , tzResult : Result String TimeZone
-    }
-
-
-type alias TimeZone =
-    { name : String
-    , changes : List { start : Int, offset : Int }
-    , initial : Int
+    { js : ZoneInfo
+    , tzResult : Result String ZoneInfo
     }
 
 
 type Msg
-    = ReceiveTimeZone (Result String TimeZone)
+    = ReceiveZoneInfo (Result String ZoneInfo)
 
 
-init : TimeZone -> ( Model, Cmd Msg )
+init : ZoneInfo -> ( Model, Cmd Msg )
 init zone =
     ( { js = zone
       , tzResult = Err "Loading"
@@ -48,13 +42,13 @@ init zone =
             (\nameOrOffset ->
                 case nameOrOffset of
                     Time.Name zoneName ->
-                        fetchTimeZone zoneName
+                        TimeZone.Json.getZoneInfoByName "/dist/2019c/" zoneName
                             |> Task.mapError (\_ -> "Couldn't load time zone: " ++ zoneName)
 
                     Time.Offset offset ->
                         Task.fail "Couldn't get time zone name"
             )
-        |> Task.attempt ReceiveTimeZone
+        |> Task.attempt ReceiveZoneInfo
     )
 
 
@@ -63,32 +57,10 @@ init zone =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update (ReceiveTimeZone result) model =
+update (ReceiveZoneInfo result) model =
     ( { model | tzResult = result }
     , Cmd.none
     )
-
-
-
--- time zone
-
-
-fetchTimeZone : String -> Task Http.Error TimeZone
-fetchTimeZone zoneName =
-    Http.get
-        ("/dist/2018e/" ++ zoneName ++ ".json")
-        (Decode.map2 (TimeZone zoneName)
-            (Decode.index 0 (Decode.list decodeOffsetChange))
-            (Decode.index 1 Decode.int)
-        )
-        |> Http.toTask
-
-
-decodeOffsetChange : Decoder { start : Int, offset : Int }
-decodeOffsetChange =
-    Decode.map2 (\a b -> { start = a, offset = b })
-        (Decode.index 0 Decode.int)
-        (Decode.index 1 Decode.int)
 
 
 
@@ -106,7 +78,7 @@ view { js, tzResult } =
             Ok tz ->
                 let
                     colWidth =
-                        33
+                        36
 
                     lines : List (Join String)
                     lines =

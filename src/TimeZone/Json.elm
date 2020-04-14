@@ -1,4 +1,14 @@
-module TimeZone.Json exposing (Error(..), getZone, getZoneByName)
+module TimeZone.Json exposing
+    ( Error(..), getZone, getZoneByName
+    , ZoneInfo, getZoneInfoByName
+    )
+
+{-|
+
+@docs Error, getZone, getZoneByName
+@docs ZoneInfo, getZoneInfoByName
+
+-}
 
 import Http
 import Json.Decode as Decode exposing (Decoder)
@@ -29,10 +39,62 @@ getZone pathToJson =
 
 getZoneByName : String -> String -> Task Http.Error Time.Zone
 getZoneByName pathToJson zoneName =
-    Http.get
-        (pathToJson ++ "/" ++ zoneName ++ ".json")
-        decodeZone
-        |> Http.toTask
+    Http.task
+        { method = "GET"
+        , headers = []
+        , url = pathToJson ++ "/" ++ zoneName ++ ".json"
+        , body = Http.emptyBody
+        , resolver = resolveJson decodeZone
+        , timeout = Nothing
+        }
+
+
+type alias ZoneInfo =
+    { name : String
+    , changes : List { start : Int, offset : Int }
+    , initial : Int
+    }
+
+
+getZoneInfoByName : String -> String -> Task Http.Error ZoneInfo
+getZoneInfoByName pathToJson zoneName =
+    Http.task
+        { method = "GET"
+        , headers = []
+        , url = pathToJson ++ "/" ++ zoneName ++ ".json"
+        , body = Http.emptyBody
+        , resolver =
+            resolveJson
+                (Decode.map2 (ZoneInfo zoneName)
+                    (Decode.index 0 (Decode.list decodeOffsetChange))
+                    (Decode.index 1 Decode.int)
+                )
+        , timeout = Nothing
+        }
+
+
+resolveJson : Decoder a -> Http.Resolver Http.Error a
+resolveJson decoder =
+    Http.stringResolver
+        (\response ->
+            case response of
+                Http.BadUrl_ url ->
+                    Err <| Http.BadUrl url
+
+                Http.Timeout_ ->
+                    Err <| Http.Timeout
+
+                Http.NetworkError_ ->
+                    Err <| Http.NetworkError
+
+                Http.BadStatus_ { statusCode } _ ->
+                    Err <| Http.BadStatus statusCode
+
+                Http.GoodStatus_ _ json ->
+                    json
+                        |> Decode.decodeString decoder
+                        |> Result.mapError (Http.BadBody << Decode.errorToString)
+        )
 
 
 decodeZone : Decoder Time.Zone

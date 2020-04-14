@@ -57,7 +57,7 @@ echo ""
 ./maketests.py 1000 > tests/Local.elm
 
 if [ -x "$(command -v elm)" ]; then
-    elm make tests/compare/Main.elm --output tests/compare/main.js > /dev/null
+    elm make tests/Compare.elm --output tests/compare/main.js > /dev/null
 fi
 
 echo "To run tests, compare to browser, and see examples, start 'elm reactor' and open:

@@ -2,6 +2,8 @@
 
 Use the [IANA Time Zone Database][tzdb] to build a set of JSON files for all time zones. Each JSON file contains a time zone's offset at 1970 and a list of offset changes through 2037.
 
+**Note:** The standard file type for time zone data is TZif; you may [consider serving TZif files instead][tzif] of JSON files.
+
 
 ## Build
 
@@ -36,6 +38,7 @@ See [`examples/GetZone.elm`][getzone] for a full example.
 
 
 [tzdb]: https://www.iana.org/time-zones
+[tzif]: https://package.elm-lang.org/packages/justinmimbs/tzif/latest/
 [tz]: https://github.com/eggert/tz
 [tzjs]: https://github.com/dbaron/tz.js
 [elmtime]: https://package.elm-lang.org/packages/elm/time/latest/

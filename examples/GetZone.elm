@@ -32,7 +32,7 @@ type Msg
 init : ( Model, Cmd Msg )
 init =
     ( Loading
-    , TimeZone.Json.getZone "/dist/2018e"
+    , TimeZone.Json.getZone "/dist/2021b"
         |> Task.attempt ReceiveTimeZone
     )
 

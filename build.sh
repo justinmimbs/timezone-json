@@ -7,7 +7,7 @@ set -e
 if [ ! -d tz/.git ]; then
     git clone https://github.com/eggert/tz.git
 else
-    git -C tz checkout master && git -C tz pull
+    git -C tz checkout main && git -C tz pull
 fi
 
 # check latest version of tz
@@ -25,14 +25,17 @@ fi
 
 # make tzdata
 
+start=0 # 1970-01-01
+end=2145916800 # 2038-01-01
+
 git -C tz -c advice.detachedHead=false checkout $version
 echo "Compiling tz data..."
-make -C tz install_data TOPDIR="$tzdata" REDO=posix_only > /dev/null
+make -C tz --quiet install_data TOPDIR="$tzdata" REDO=posix_only ZFLAGS="-b slim -r @$start/@$end"
 
 zoneinfo="$tzdata/usr/share/zoneinfo"
 cp tz/zone.tab "$zoneinfo/zone.tab"
 
-git -C tz checkout master
+git -C tz checkout main
 
 # ensure tzjs
 

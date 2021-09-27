@@ -42,7 +42,7 @@ init zone =
             (\nameOrOffset ->
                 case nameOrOffset of
                     Time.Name zoneName ->
-                        TimeZone.Json.getZoneInfoByName "/dist/2019c/" zoneName
+                        TimeZone.Json.getZoneInfoByName "/dist/2021b/" zoneName
                             |> Task.mapError (\_ -> "Couldn't load time zone: " ++ zoneName)
 
                     Time.Offset offset ->
